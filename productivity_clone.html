@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Productivity Mini Clone</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class' }
+</script>
+<style>
+  body { font-family: system-ui, sans-serif; }
+  .tab-btn { transition: background 0.15s; }
+  #timer-display { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="w-56 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-900 shrink-0">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+      <span class="text-lg font-bold text-gray-800 dark:text-gray-100">Productivity</span>
+      <button onclick="toggleDark()" class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+        <span id="dark-icon">☀️</span>
+      </button>
+    </div>
+    <nav class="flex-1 py-2">
+      <div class="px-5 py-1 text-xs uppercase tracking-widest text-gray-400">School</div>
+      <button class="tab-btn" onclick="show('assignments')">Assignments</button>
+      <button class="tab-btn" onclick="show('grades')">Grades</button>
+      <button class="tab-btn" onclick="show('study')">Study Timer</button>
+      <button class="tab-btn" onclick="show('games')">Games</button>
+
+      <div class="px-5 py-1 mt-3 text-xs uppercase tracking-widest text-gray-400">Spending</div>
+      <button class="tab-btn" onclick="show('spending')">Overview</button>
+      <button class="tab-btn" onclick="show('add_spending')">Add Expense</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+
+    <!-- ASSIGNMENTS -->
+    <section id="page-assignments" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">Assignments</h1>
+        <button onclick="openAddModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ Add</button>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-100 dark:bg-gray-700 text-left">
+            <tr>
+              <th class="px-4 py-3 font-medium">Class</th>
+              <th class="px-4 py-3 font-medium">Title</th>
+              <th class="px-4 py-3 font-medium">Due Date</th>
+              <th class="px-4 py-3 font-medium">Priority</th>
+              <th class="px-4 py-3 font-medium">Done</th>
+            </tr>
+          </thead>
+          <tbody id="assignments-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GRADES -->
+    <section id="page-grades" class="hidden">
+      <h1 class="text-2xl font-semibold mb-4">Grades</h1>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="grades-grid">
+        <!-- cards injected by JS -->
+      </div>
+    </section>
+
+    <!-- STUDY TIMER -->
+    <section id="page-study" class="hidden">
+      <h1 class="text-2xl font-semibold mb-6">Study Timer</h1>
+      <div class="max-w-sm mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-8 text-center">
+        <div id="timer-display" class="text-6xl font-mono font-bold mb-6">25:00</div>
+        <div class="flex gap-3 justify-center mb-6">
+          <button onclick="setTimer(25)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">25 min</button>
+          <button onclick="setTimer(10)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">10 min</button>
+          <button onclick="setTimer(5)" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">5 min</button>
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button onclick="startTimer()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Start</button>
+          <button onclick="pauseTimer()" class="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Pause</button>
+          <button onclick="resetTimer()" class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">Reset</button>
+        </div>
+        <div class="mt-6 text-sm text-gray-500 dark:text-gray-400">Sessions today: <span id="session-count" class="font-bold text-gray-700 dark:text-gray-200">0</span></div>
+      </div>
+    </section>
+
+    <!-- GAMES -->
+    <section id="page-games" class="hidden">
+      <h1 class="text-2xl font-semibold mb-6">Games / Breaks</h1>
+      <div class="max-w-xs mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+        <p class="text-4xl mb-4">🎮</p>
+        <h2 class="text-lg font-semibold mb-2">Number Guessing</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Guess a number between 1–100</p>
+        <input id="guess-input" type="number" min="1" max="100" placeholder="Your guess..."
+          class="w-full border rounded-lg px-3 py-2 mb-3 text-center dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <button onclick="makeGuess()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mb-2">Guess</button>
+        <div id="guess-msg" class="text-sm font-medium min-h-[20px]"></div>
+        <button onclick="newGame()" class="mt-3 text-xs text-gray-400 hover:text-gray-600 underline">New game</button>
+      </div>
+    </section>
+
+    <!-- SPENDING OVERVIEW -->
+    <section id="page-spending" class="hidden">
+      <h1 class="text-2xl font-semibold mb-4">Spending Overview</h1>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="spending-stats"></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+        <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-500">Recent Expenses</h2>
+        <table class="w-full text-sm">
+          <thead class="text-left text-gray-400">
+            <tr><th class="pb-2">Date</th><th class="pb-2">Category</th><th class="pb-2">Description</th><th class="pb-2 text-right">Amount</th></tr>
+          </thead>
+          <tbody id="spending-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ADD EXPENSE -->
+    <section id="page-add_spending" class="hidden">
+      <h1 class="text-2xl font-semibold mb-4">Add Expense</h1>
+      <div class="max-w-md bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Category</label>
+          <select id="exp-category" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option>Food</option><option>Transport</option><option>Entertainment</option><option>Subscriptions</option><option>Other</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Description</label>
+          <input id="exp-desc" type="text" placeholder="e.g. Chipotle" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-1">Amount ($)</label>
+          <input id="exp-amount" type="number" min="0" step="0.01" placeholder="0.00" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <button onclick="addExpense()" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Add Expense</button>
+        <div id="exp-msg" class="mt-3 text-sm text-green-600 dark:text-green-400 min-h-[20px]"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ADD ASSIGNMENT MODAL -->
+<div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+    <h2 class="text-xl font-semibold mb-4">New Assignment</h2>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Class</label>
+      <input id="a-class" type="text" placeholder="e.g. CSCI 301" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Title</label>
+      <input id="a-title" type="text" placeholder="Assignment title" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Due Date</label>
+      <input id="a-due" type="date" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="mb-5">
+      <label class="block text-sm font-medium mb-1">Priority</label>
+      <select id="a-priority" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <option>High</option><option>Medium</option><option>Low</option>
+      </select>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="saveAssignment()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+      <button onclick="closeModal()" class="flex-1 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+if (!assignments.length) {
+  assignments = [
+    { id:1, cls:'CSCI 301', title:'Homework 3', due:'2026-03-28', priority:'High', done:false },
+    { id:2, cls:'MATH 211', title:'Problem Set 5', due:'2026-03-30', priority:'Medium', done:false },
+    { id:3, cls:'CSCI 416', title:'Project Proposal', due:'2026-04-02', priority:'High', done:true },
+  ];
+}
+
+let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+if (!expenses.length) {
+  expenses = [
+    { date:'2026-03-24', category:'Food', desc:'Chipotle', amount:13.50 },
+    { date:'2026-03-23', category:'Transport', desc:'Uber ride', amount:8.25 },
+    { date:'2026-03-22', category:'Subscriptions', desc:'Spotify', amount:9.99 },
+    { date:'2026-03-21', category:'Food', desc:'Dining hall', amount:11.00 },
+    { date:'2026-03-20', category:'Entertainment', desc:'Movie ticket', amount:14.00 },
+  ];
+}
+
+const grades = [
+  { cls:'CSCI 301', grade:'A-', pct:91 },
+  { cls:'MATH 211', grade:'B+', pct:87 },
+  { cls:'CSCI 416', grade:'A', pct:95 },
+  { cls:'HIST 150', grade:'B', pct:83 },
+  { cls:'PHYS 201', grade:'B+', pct:88 },
+];
+
+// ── DARK MODE ─────────────────────────────────────────────────────────────
+let dark = localStorage.getItem('dark') === 'true';
+function applyDark() {
+  document.documentElement.classList.toggle('dark', dark);
+  document.getElementById('dark-icon').textContent = dark ? '🌙' : '☀️';
+}
+function toggleDark() { dark = !dark; localStorage.setItem('dark', dark); applyDark(); }
+applyDark();
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+let currentPage = 'assignments';
+function show(page) {
+  document.querySelectorAll('section[id^="page-"]').forEach(s => s.classList.add('hidden'));
+  document.getElementById('page-' + page).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.className = 'tab-btn block w-full text-left px-5 py-2 rounded-md text-sm ' +
+      'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300';
+  });
+  const active = [...document.querySelectorAll('.tab-btn')].find(b => b.getAttribute('onclick') === `show('${page}')`);
+  if (active) active.className = 'tab-btn block w-full text-left px-5 py-2 rounded-md text-sm font-semibold bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100';
+  currentPage = page;
+  if (page === 'assignments') renderAssignments();
+  if (page === 'grades') renderGrades();
+  if (page === 'spending') renderSpending();
+}
+
+// ── ASSIGNMENTS ───────────────────────────────────────────────────────────
+function save() { localStorage.setItem('assignments', JSON.stringify(assignments)); }
+function renderAssignments() {
+  const tbody = document.getElementById('assignments-body');
+  tbody.innerHTML = assignments.map((a, i) => {
+    const p = a.priority === 'High' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+            : a.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+            : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
+    return `<tr class="border-t border-gray-100 dark:border-gray-700 ${a.done ? 'opacity-50' : ''} hover:bg-gray-50 dark:hover:bg-gray-750">
+      <td class="px-4 py-3 font-medium">${a.cls}</td>
+      <td class="px-4 py-3 ${a.done ? 'line-through text-gray-400' : ''}">${a.title}</td>
+      <td class="px-4 py-3 text-gray-500">${a.due}</td>
+      <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${p}">${a.priority}</span></td>
+      <td class="px-4 py-3"><input type="checkbox" ${a.done?'checked':''} onchange="toggleDone(${i})" class="w-4 h-4 accent-blue-600 cursor-pointer" /></td>
+    </tr>`;
+  }).join('');
+}
+function toggleDone(i) { assignments[i].done = !assignments[i].done; save(); renderAssignments(); }
+function openAddModal() { document.getElementById('modal').classList.replace('hidden','flex'); }
+function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+function saveAssignment() {
+  const cls = document.getElementById('a-class').value.trim();
+  const title = document.getElementById('a-title').value.trim();
+  const due = document.getElementById('a-due').value;
+  const priority = document.getElementById('a-priority').value;
+  if (!cls || !title || !due) return alert('Fill in all fields.');
+  assignments.push({ id: Date.now(), cls, title, due, priority, done:false });
+  save(); closeModal(); renderAssignments();
+  ['a-class','a-title','a-due'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── GRADES ────────────────────────────────────────────────────────────────
+function renderGrades() {
+  document.getElementById('grades-grid').innerHTML = grades.map(g => {
+    const color = g.pct >= 90 ? 'text-green-600 dark:text-green-400' : g.pct >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-yellow-600 dark:text-yellow-400';
+    return `<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+      <div class="text-sm text-gray-500 mb-1">${g.cls}</div>
+      <div class="text-4xl font-bold ${color} mb-1">${g.grade}</div>
+      <div class="text-sm text-gray-400">${g.pct}%</div>
+      <div class="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full rounded-full bg-blue-500" style="width:${g.pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── STUDY TIMER ───────────────────────────────────────────────────────────
+let timerSecs = 25*60, timerInterval = null, sessions = 0;
+function updateDisplay() {
+  const m = String(Math.floor(timerSecs/60)).padStart(2,'0');
+  const s = String(timerSecs%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+function setTimer(min) { clearInterval(timerInterval); timerInterval=null; timerSecs=min*60; updateDisplay(); }
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    if (timerSecs <= 0) {
+      clearInterval(timerInterval); timerInterval=null;
+      sessions++; document.getElementById('session-count').textContent = sessions;
+      alert('Session complete! Take a break.');
+      timerSecs = 25*60; updateDisplay(); return;
+    }
+    timerSecs--; updateDisplay();
+  }, 1000);
+}
+function pauseTimer() { clearInterval(timerInterval); timerInterval=null; }
+function resetTimer() { pauseTimer(); timerSecs=25*60; updateDisplay(); }
+
+// ── NUMBER GAME ───────────────────────────────────────────────────────────
+let secret, guesses;
+function newGame() { secret=Math.ceil(Math.random()*100); guesses=0; document.getElementById('guess-msg').textContent=''; document.getElementById('guess-input').value=''; }
+function makeGuess() {
+  const g = parseInt(document.getElementById('guess-input').value);
+  if (!g || g<1||g>100) return;
+  guesses++;
+  const msg = document.getElementById('guess-msg');
+  if (g===secret) { msg.className='text-sm font-medium text-green-600 dark:text-green-400'; msg.textContent=`Correct in ${guesses} guesses!`; }
+  else { msg.className='text-sm font-medium text-red-500'; msg.textContent=g<secret?'Too low!':'Too high!'; }
+}
+newGame();
+
+// ── SPENDING ──────────────────────────────────────────────────────────────
+function saveExpenses() { localStorage.setItem('expenses', JSON.stringify(expenses)); }
+function renderSpending() {
+  const total = expenses.reduce((s,e)=>s+e.amount,0);
+  const byCategory = {};
+  expenses.forEach(e => { byCategory[e.category] = (byCategory[e.category]||0)+e.amount; });
+  const topCat = Object.entries(byCategory).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('spending-stats').innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 col-span-2">
+      <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Total Spent</div>
+      <div class="text-3xl font-bold">$${total.toFixed(2)}</div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+      <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Transactions</div>
+      <div class="text-3xl font-bold">${expenses.length}</div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+      <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Top Category</div>
+      <div class="text-xl font-bold">${topCat ? topCat[0] : '–'}</div>
+      <div class="text-sm text-gray-400">${topCat ? '$'+topCat[1].toFixed(2) : ''}</div>
+    </div>`;
+  document.getElementById('spending-body').innerHTML = [...expenses].reverse().slice(0,10).map(e =>
+    `<tr class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
+      <td class="py-2 text-gray-500 text-xs">${e.date}</td>
+      <td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700">${e.category}</span></td>
+      <td class="py-2">${e.desc}</td>
+      <td class="py-2 text-right font-medium">$${e.amount.toFixed(2)}</td>
+    </tr>`
+  ).join('');
+}
+function addExpense() {
+  const category = document.getElementById('exp-category').value;
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  if (!desc || isNaN(amount) || amount<=0) return;
+  const date = new Date().toISOString().slice(0,10);
+  expenses.push({ date, category, desc, amount });
+  saveExpenses();
+  document.getElementById('exp-desc').value='';
+  document.getElementById('exp-amount').value='';
+  const msg = document.getElementById('exp-msg');
+  msg.textContent = `Added $${amount.toFixed(2)} for "${desc}"`;
+  setTimeout(()=>msg.textContent='', 2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+show('assignments');
+</script>
+</body>
+</html>
