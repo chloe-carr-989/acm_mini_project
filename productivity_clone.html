@@ -165,13 +165,15 @@
         <button onclick="openHabitModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ Add Habit</button>
       </div>
       <p class="text-sm text-gray-400 mb-5">Today: <span id="habit-date" class="font-medium text-gray-600 dark:text-gray-300"></span></p>
-      <div id="habits-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl"></div>
+      <div id="habits-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8"></div>
+      <h2 class="text-lg font-semibold mb-3">Last 28 Days</h2>
+      <div id="habit-heatmap" class="bg-white dark:bg-gray-800 rounded-xl shadow p-4"></div>
     </section>
 
     <!-- GAMES -->
     <section id="page-games" class="hidden">
       <h1 class="text-2xl font-semibold mb-6">Games / Breaks</h1>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
         <!-- Number Guessing -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
@@ -265,7 +267,7 @@
           <button onclick="saveBudget()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Set</button>
         </div>
       </div>
-      <div id="budget-display" class="max-w-md"></div>
+      <div id="budget-display"></div>
     </section>
 
     <!-- ADD EXPENSE -->
@@ -696,10 +698,16 @@ function resetTimer() { pauseTimer(); timerSecs=25*60; updateDisplay(); }
 let flashcards = JSON.parse(localStorage.getItem('flashcards') || '[]');
 if (!flashcards.length) {
   flashcards = [
-    { id:1, deck:'CSCI 301', term:'Big-O notation', def:'Describes the upper bound on time complexity of an algorithm.' },
-    { id:2, deck:'CSCI 301', term:'Binary Search', def:'O(log n) search algorithm on a sorted array.' },
-    { id:3, deck:'MATH 211', term:'Derivative of sin(x)', def:'cos(x)' },
-    { id:4, deck:'MATH 211', term:'Chain Rule', def:"d/dx[f(g(x))] = f'(g(x)) · g'(x)" },
+    { id:1,  deck:'CSCI 301', term:'Big-O notation',      def:'Upper bound on time complexity. O(1) < O(log n) < O(n) < O(n log n) < O(n²).' },
+    { id:2,  deck:'CSCI 301', term:'Binary Search',       def:'O(log n) search on a sorted array — halve the search space each step.' },
+    { id:3,  deck:'CSCI 301', term:'Linked List',         def:'Linear data structure where each node holds a value and pointer to the next node.' },
+    { id:4,  deck:'CSCI 301', term:'Stack vs Queue',      def:'Stack = LIFO (push/pop). Queue = FIFO (enqueue/dequeue).' },
+    { id:5,  deck:'CSCI 301', term:'Hash Table',          def:'Maps keys to values via a hash function. Average O(1) lookup.' },
+    { id:6,  deck:'CSCI 301', term:'Recursion base case', def:'The condition that stops recursive calls — without it you get infinite recursion.' },
+    { id:7,  deck:'MATH 211', term:'Derivative of sin(x)',def:'cos(x)' },
+    { id:8,  deck:'MATH 211', term:'Chain Rule',          def:"d/dx[f(g(x))] = f'(g(x)) · g'(x)" },
+    { id:9,  deck:'MATH 211', term:'Integration by parts',def:'∫u dv = uv − ∫v du' },
+    { id:10, deck:'MATH 211', term:"L'Hôpital's Rule",   def:'If lim f/g = 0/0 or ∞/∞, then lim f/g = lim f\'/g\'.' },
   ];
 }
 let activeDeck = null, cardIndex = 0, cardFlipped = false;
@@ -754,17 +762,31 @@ function deleteFlash(id) { flashcards = flashcards.filter(f=>f.id!==id); saveFla
 // ── HABIT TRACKER ─────────────────────────────────────────────────────────
 let habits = JSON.parse(localStorage.getItem('habits') || '[]');
 if (!habits.length) {
+  // generate random history for last 28 days for dummy data
+  function fakeHistory(prob) {
+    const h = [];
+    for (let i=27; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      if (Math.random() < prob) h.push(d.toISOString().slice(0,10));
+    }
+    return h;
+  }
   habits = [
-    { id:1, name:'Drink water', emoji:'💧', streak:3 },
-    { id:2, name:'Exercise', emoji:'🏃', streak:1 },
-    { id:3, name:'Study 2 hours', emoji:'📚', streak:5 },
-    { id:4, name:'Sleep 8 hours', emoji:'😴', streak:0 },
+    { id:1, name:'Drink water',    emoji:'💧', streak:3,  doneDate:null, history:fakeHistory(0.85) },
+    { id:2, name:'Exercise',       emoji:'🏃', streak:1,  doneDate:null, history:fakeHistory(0.5)  },
+    { id:3, name:'Study 2 hours',  emoji:'📚', streak:5,  doneDate:null, history:fakeHistory(0.75) },
+    { id:4, name:'Sleep 8 hours',  emoji:'😴', streak:0,  doneDate:null, history:fakeHistory(0.4)  },
+    { id:5, name:'Read 20 min',    emoji:'📖', streak:2,  doneDate:null, history:fakeHistory(0.6)  },
+    { id:6, name:'No junk food',   emoji:'🥗', streak:4,  doneDate:null, history:fakeHistory(0.65) },
+    { id:7, name:'Meditate',       emoji:'🧘', streak:0,  doneDate:null, history:fakeHistory(0.3)  },
+    { id:8, name:'Cold shower',    emoji:'🚿', streak:7,  doneDate:null, history:fakeHistory(0.55) },
   ];
 }
 function saveHabits() { localStorage.setItem('habits', JSON.stringify(habits)); }
 function renderHabits() {
   const today = todayStr();
   document.getElementById('habit-date').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  renderHeatmap();
   document.getElementById('habits-list').innerHTML = habits.map(h => {
     const done = (h.doneDate === today);
     return `<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex items-center gap-4">
@@ -788,11 +810,15 @@ function toggleHabit(id) {
   const today = todayStr();
   const h = habits.find(h=>h.id===id);
   if (!h) return;
+  if (!h.history) h.history = [];
   if (h.doneDate === today) {
-    h.doneDate = null; h.streak = Math.max(0, h.streak - 1);
+    h.doneDate = null;
+    h.history = h.history.filter(d => d !== today);
+    h.streak = Math.max(0, h.streak - 1);
   } else {
     h.streak = (h.doneDate === new Date(Date.now()-86400000).toISOString().slice(0,10)) ? h.streak+1 : 1;
     h.doneDate = today;
+    if (!h.history.includes(today)) h.history.push(today);
   }
   saveHabits(); renderHabits();
 }
@@ -807,6 +833,49 @@ function saveHabit() {
   ['hab-name','hab-emoji'].forEach(id => document.getElementById(id).value='');
 }
 function deleteHabit(id) { habits = habits.filter(h=>h.id!==id); saveHabits(); renderHabits(); }
+function renderHeatmap() {
+  const days = 28;
+  // build array of last 28 days
+  const dates = [];
+  for (let i=days-1; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  // count completions per day across all habits
+  const counts = {};
+  dates.forEach(d => counts[d] = 0);
+  habits.forEach(h => (h.history||[]).forEach(d => { if (counts[d] !== undefined) counts[d]++; }));
+  const maxCount = habits.length || 1;
+  const weekDays = ['M','T','W','T','F','S','S'];
+  // build 4-week grid (7 cols)
+  const cells = dates.map((d, i) => {
+    const n = counts[d];
+    const ratio = n / maxCount;
+    const bg = n === 0 ? 'bg-gray-200 dark:bg-gray-700'
+              : ratio <= 0.25 ? 'bg-green-200 dark:bg-green-900'
+              : ratio <= 0.5  ? 'bg-green-400 dark:bg-green-700'
+              : ratio <= 0.75 ? 'bg-green-500 dark:bg-green-500'
+              : 'bg-green-600 dark:bg-green-400';
+    const label = new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return `<div class="${bg} rounded-sm w-7 h-7 flex items-center justify-center text-xs cursor-default" title="${label}: ${n}/${habits.length} habits">${n||''}</div>`;
+  });
+  // week-day labels above
+  const dayLabels = weekDays.map(w => `<div class="w-7 text-center text-xs text-gray-400">${w}</div>`).join('');
+  document.getElementById('habit-heatmap').innerHTML = `
+    <div class="flex gap-1 mb-1">${dayLabels}</div>
+    <div class="grid gap-1" style="grid-template-columns:repeat(7,1.75rem)">
+      ${cells.join('')}
+    </div>
+    <div class="flex items-center gap-2 mt-3 text-xs text-gray-400">
+      <span>Less</span>
+      <div class="w-4 h-4 rounded-sm bg-gray-200 dark:bg-gray-700"></div>
+      <div class="w-4 h-4 rounded-sm bg-green-200 dark:bg-green-900"></div>
+      <div class="w-4 h-4 rounded-sm bg-green-400"></div>
+      <div class="w-4 h-4 rounded-sm bg-green-500"></div>
+      <div class="w-4 h-4 rounded-sm bg-green-600"></div>
+      <span>More</span>
+    </div>`;
+}
 
 // ── NUMBER GAME ───────────────────────────────────────────────────────────
 let secret, guesses;
@@ -1001,26 +1070,69 @@ function getWeekStart() {
 function renderBudget() {
   const budget = parseFloat(localStorage.getItem('budget') || '0');
   document.getElementById('budget-input').value = budget || '';
+  if (!budget) { document.getElementById('budget-display').innerHTML = '<p class="text-gray-400 text-sm">Set a weekly budget above to see your progress.</p>'; return; }
+
   const weekStart = getWeekStart();
-  const weekSpend = expenses.filter(e => e.date >= weekStart).reduce((s,e)=>s+e.amount, 0);
-  const pct = budget > 0 ? Math.min(100, (weekSpend/budget)*100) : 0;
+  const weekExpenses = expenses.filter(e => e.date >= weekStart);
+  const weekSpend = weekExpenses.reduce((s,e)=>s+e.amount, 0);
+  const pct = Math.min(100, (weekSpend/budget)*100);
   const remaining = Math.max(0, budget - weekSpend);
-  const over = weekSpend > budget && budget > 0;
-  const color = pct < 60 ? 'bg-green-500' : pct < 85 ? 'bg-yellow-500' : 'bg-red-500';
-  document.getElementById('budget-display').innerHTML = budget > 0 ? `
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-      <div class="flex justify-between text-sm mb-2">
-        <span class="text-gray-500">This week's spending</span>
-        <span class="font-semibold">$${weekSpend.toFixed(2)} / $${budget.toFixed(2)}</span>
+  const over = weekSpend > budget;
+  const barColor = pct < 60 ? 'bg-green-500' : pct < 85 ? 'bg-yellow-500' : 'bg-red-500';
+
+  // days elapsed this week (Mon=0)
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weekStartDate = new Date(weekStart+'T00:00:00');
+  const daysElapsed = Math.max(1, Math.round((today - weekStartDate) / 86400000) + 1);
+  const daysLeft = Math.max(0, 7 - daysElapsed);
+  const dailyAvg = weekSpend / daysElapsed;
+  const projected = dailyAvg * 7;
+
+  // category breakdown
+  const byCat = {};
+  weekExpenses.forEach(e => byCat[e.category] = (byCat[e.category]||0) + e.amount);
+  const catColors = { Food:'bg-orange-400', Transport:'bg-blue-400', Entertainment:'bg-purple-400', Subscriptions:'bg-pink-400', Other:'bg-gray-400' };
+  const catRows = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => {
+    const catPct = weekSpend > 0 ? (amt/weekSpend)*100 : 0;
+    return `<div class="mb-2">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-gray-500">${cat}</span>
+        <span class="font-medium">$${amt.toFixed(2)} <span class="text-gray-400">(${catPct.toFixed(0)}%)</span></span>
       </div>
-      <div class="h-4 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mb-3">
-        <div class="h-full rounded-full ${color} transition-all" style="width:${pct}%"></div>
+      <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full rounded-full ${catColors[cat]||'bg-gray-400'}" style="width:${catPct}%"></div>
       </div>
-      <div class="text-sm ${over?'text-red-500 font-semibold':'text-gray-500'}">
-        ${over ? `⚠️ Over budget by $${(weekSpend-budget).toFixed(2)}` : `$${remaining.toFixed(2)} remaining`}
+    </div>`;
+  }).join('');
+
+  document.getElementById('budget-display').innerHTML = `
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 col-span-2">
+        <div class="flex justify-between text-sm mb-2">
+          <span class="text-gray-500">This week</span>
+          <span class="font-semibold ${over?'text-red-500':''}">$${weekSpend.toFixed(2)} / $${budget.toFixed(2)}</span>
+        </div>
+        <div class="h-4 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mb-2">
+          <div class="h-full rounded-full ${barColor} transition-all" style="width:${pct}%"></div>
+        </div>
+        <div class="text-sm ${over?'text-red-500 font-semibold':'text-gray-500'}">
+          ${over ? `⚠️ Over by $${(weekSpend-budget).toFixed(2)}` : `$${remaining.toFixed(2)} remaining`}
+        </div>
       </div>
-      <div class="mt-4 text-xs text-gray-400">Week of ${weekStart}</div>
-    </div>` : '<p class="text-gray-400 text-sm">Set a weekly budget above to see your progress.</p>';
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Daily avg</div>
+        <div class="text-2xl font-bold">$${dailyAvg.toFixed(2)}</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">Projected</div>
+        <div class="text-2xl font-bold ${projected > budget ? 'text-red-500' : 'text-green-500'}">$${projected.toFixed(2)}</div>
+        <div class="text-xs text-gray-400">${daysLeft} days left</div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">By Category</h2>
+      ${catRows || '<p class="text-sm text-gray-400">No expenses this week.</p>'}
+    </div>`;
 }
 function saveBudget() {
   const v = parseFloat(document.getElementById('budget-input').value);
