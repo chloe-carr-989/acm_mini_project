@@ -167,15 +167,62 @@
     <!-- GAMES -->
     <section id="page-games" class="hidden">
       <h1 class="text-2xl font-semibold mb-6">Games / Breaks</h1>
-      <div class="max-w-xs mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
-        <p class="text-4xl mb-4">🎮</p>
-        <h2 class="text-lg font-semibold mb-2">Number Guessing</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Guess a number between 1–100</p>
-        <input id="guess-input" type="number" min="1" max="100" placeholder="Your guess..."
-          class="w-full border rounded-lg px-3 py-2 mb-3 text-center dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <button onclick="makeGuess()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mb-2">Guess</button>
-        <div id="guess-msg" class="text-sm font-medium min-h-[20px]"></div>
-        <button onclick="newGame()" class="mt-3 text-xs text-gray-400 hover:text-gray-600 underline">New game</button>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
+
+        <!-- Number Guessing -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+          <p class="text-3xl mb-2">🔢</p>
+          <h2 class="text-lg font-semibold mb-1">Number Guessing</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Guess a number between 1–100</p>
+          <input id="guess-input" type="number" min="1" max="100" placeholder="Your guess..."
+            class="w-full border rounded-lg px-3 py-2 mb-3 text-center dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <button onclick="makeGuess()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mb-2">Guess</button>
+          <div id="guess-msg" class="text-sm font-medium min-h-[20px]"></div>
+          <button onclick="newGame()" class="mt-2 text-xs text-gray-400 hover:text-gray-600 underline">New game</button>
+        </div>
+
+        <!-- Word Scramble -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+          <p class="text-3xl mb-2">🔀</p>
+          <h2 class="text-lg font-semibold mb-1">Word Scramble</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Unscramble the word</p>
+          <div id="scramble-word" class="text-3xl font-mono font-bold tracking-widest mb-4 text-blue-600 dark:text-blue-400"></div>
+          <input id="scramble-input" type="text" placeholder="Your answer..."
+            class="w-full border rounded-lg px-3 py-2 mb-3 text-center dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onkeydown="if(event.key==='Enter') checkScramble()" />
+          <button onclick="checkScramble()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 mb-2">Check</button>
+          <div id="scramble-msg" class="text-sm font-medium min-h-[20px]"></div>
+          <button onclick="newScramble()" class="mt-2 text-xs text-gray-400 hover:text-gray-600 underline">New word</button>
+        </div>
+
+        <!-- Reaction Time -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+          <p class="text-3xl mb-2">⚡</p>
+          <h2 class="text-lg font-semibold mb-1">Reaction Time</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Click when it turns green!</p>
+          <div id="reaction-box"
+            onclick="reactionClick()"
+            class="h-24 rounded-xl flex items-center justify-center text-white font-semibold cursor-pointer select-none transition-colors bg-gray-300 dark:bg-gray-600 mb-4">
+            Click Start
+          </div>
+          <button onclick="startReaction()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Start</button>
+          <div id="reaction-msg" class="mt-3 text-sm font-medium min-h-[20px]"></div>
+        </div>
+
+        <!-- Math Quiz -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+          <p class="text-3xl mb-2">🧮</p>
+          <h2 class="text-lg font-semibold mb-1">Math Quiz</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">10 questions, how fast?</p>
+          <div id="math-question" class="text-2xl font-bold mb-4 min-h-[36px]"></div>
+          <input id="math-input" type="number" placeholder="Answer..."
+            class="w-full border rounded-lg px-3 py-2 mb-3 text-center dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            onkeydown="if(event.key==='Enter') checkMath()" />
+          <button onclick="checkMath()" class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2">Submit</button>
+          <div id="math-msg" class="text-sm font-medium min-h-[20px]"></div>
+          <button onclick="startMath()" class="mt-2 text-xs text-gray-400 hover:text-gray-600 underline">New quiz</button>
+        </div>
+
       </div>
     </section>
 
@@ -376,11 +423,15 @@ if (!assignments.length) {
 let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
 if (!expenses.length) {
   expenses = [
-    { date:'2026-03-24', category:'Food', desc:'Chipotle', amount:13.50 },
-    { date:'2026-03-23', category:'Transport', desc:'Uber ride', amount:8.25 },
-    { date:'2026-03-22', category:'Subscriptions', desc:'Spotify', amount:9.99 },
-    { date:'2026-03-21', category:'Food', desc:'Dining hall', amount:11.00 },
-    { date:'2026-03-20', category:'Entertainment', desc:'Movie ticket', amount:14.00 },
+    { date:'2026-03-26', category:'Food', desc:'Campus cafe', amount:9.75 },
+    { date:'2026-03-26', category:'Transport', desc:'Bus pass top-up', amount:5.00 },
+    { date:'2026-03-25', category:'Food', desc:'Chipotle', amount:13.50 },
+    { date:'2026-03-25', category:'Entertainment', desc:'Movie night', amount:14.00 },
+    { date:'2026-03-24', category:'Food', desc:'Dining hall', amount:11.00 },
+    { date:'2026-03-24', category:'Transport', desc:'Uber ride', amount:8.25 },
+    { date:'2026-03-23', category:'Subscriptions', desc:'Spotify', amount:9.99 },
+    { date:'2026-03-20', category:'Food', desc:'Brunch', amount:16.50 },
+    { date:'2026-03-18', category:'Entertainment', desc:'Bowling', amount:12.00 },
   ];
 }
 
@@ -675,11 +726,103 @@ function makeGuess() {
 }
 newGame();
 
+// ── WORD SCRAMBLE ─────────────────────────────────────────────────────────
+const WORDS = ['python','javascript','algorithm','function','variable','boolean','integer','recursion','pointer','compiler','syntax','database','network','boolean','iterator'];
+let scrambleAnswer = '';
+function scramble(w) { return w.split('').sort(()=>Math.random()-0.5).join('').toUpperCase(); }
+function newScramble() {
+  const w = WORDS[Math.floor(Math.random()*WORDS.length)];
+  scrambleAnswer = w;
+  let s = scramble(w);
+  while (s === w.toUpperCase()) s = scramble(w);
+  document.getElementById('scramble-word').textContent = s;
+  document.getElementById('scramble-input').value = '';
+  document.getElementById('scramble-msg').textContent = '';
+}
+function checkScramble() {
+  const val = document.getElementById('scramble-input').value.trim().toLowerCase();
+  const msg = document.getElementById('scramble-msg');
+  if (val === scrambleAnswer) {
+    msg.className='text-sm font-medium text-green-600 dark:text-green-400';
+    msg.textContent='Correct! 🎉'; setTimeout(newScramble, 1200);
+  } else {
+    msg.className='text-sm font-medium text-red-500'; msg.textContent='Try again!';
+  }
+}
+newScramble();
+
+// ── REACTION TIME ─────────────────────────────────────────────────────────
+let reactionState = 'idle', reactionStart = 0, reactionTimeout = null;
+function startReaction() {
+  const box = document.getElementById('reaction-box');
+  document.getElementById('reaction-msg').textContent = '';
+  reactionState = 'waiting';
+  box.className = box.className.replace(/bg-\S+/g,'') + ' bg-red-400';
+  box.textContent = 'Wait...';
+  const delay = 1500 + Math.random() * 3000;
+  reactionTimeout = setTimeout(() => {
+    reactionState = 'ready'; reactionStart = Date.now();
+    box.className = box.className.replace(/bg-\S+/g,'') + ' bg-green-500';
+    box.textContent = 'CLICK NOW!';
+  }, delay);
+}
+function reactionClick() {
+  const box = document.getElementById('reaction-box');
+  const msg = document.getElementById('reaction-msg');
+  if (reactionState === 'idle') return;
+  if (reactionState === 'waiting') {
+    clearTimeout(reactionTimeout); reactionState = 'idle';
+    box.className = box.className.replace(/bg-\S+/g,'') + ' bg-gray-300 dark:bg-gray-600';
+    box.textContent = 'Too early! Click Start';
+    msg.className='text-sm font-medium text-red-500'; msg.textContent='Too soon!';
+    return;
+  }
+  if (reactionState === 'ready') {
+    const ms = Date.now() - reactionStart; reactionState = 'idle';
+    box.className = box.className.replace(/bg-\S+/g,'') + ' bg-blue-400';
+    box.textContent = `${ms}ms`;
+    msg.className='text-sm font-medium text-green-600 dark:text-green-400';
+    msg.textContent = ms < 200 ? `${ms}ms — Lightning fast!` : ms < 300 ? `${ms}ms — Great!` : ms < 500 ? `${ms}ms — Not bad` : `${ms}ms — Keep practicing`;
+  }
+}
+
+// ── MATH QUIZ ─────────────────────────────────────────────────────────────
+let mathAnswer=0, mathScore=0, mathTotal=0, mathStart=0;
+function randMath() {
+  const ops=['+','-','×']; const op=ops[Math.floor(Math.random()*ops.length)];
+  let a,b;
+  if(op==='+'){a=Math.floor(Math.random()*50)+1;b=Math.floor(Math.random()*50)+1;mathAnswer=a+b;}
+  else if(op==='-'){a=Math.floor(Math.random()*50)+20;b=Math.floor(Math.random()*a)+1;mathAnswer=a-b;}
+  else{a=Math.floor(Math.random()*12)+1;b=Math.floor(Math.random()*12)+1;mathAnswer=a*b;}
+  document.getElementById('math-question').textContent=`${a} ${op} ${b} = ?`;
+  document.getElementById('math-input').value='';
+  document.getElementById('math-input').focus();
+}
+function startMath() {
+  mathScore=0; mathTotal=0; mathStart=Date.now();
+  document.getElementById('math-msg').textContent='';
+  randMath();
+}
+function checkMath() {
+  const val = parseInt(document.getElementById('math-input').value);
+  if (isNaN(val)) return;
+  mathTotal++;
+  const msg = document.getElementById('math-msg');
+  if (val === mathAnswer) { mathScore++; msg.className='text-sm font-medium text-green-600 dark:text-green-400'; msg.textContent=`✓ Correct! ${mathScore}/${mathTotal}`; }
+  else { msg.className='text-sm font-medium text-red-500'; msg.textContent=`✗ It was ${mathAnswer}. ${mathScore}/${mathTotal}`; }
+  if (mathTotal >= 10) {
+    const secs = ((Date.now()-mathStart)/1000).toFixed(1);
+    document.getElementById('math-question').textContent='';
+    msg.textContent=`Done! ${mathScore}/10 in ${secs}s`;
+    return;
+  }
+  setTimeout(randMath, 800);
+}
+startMath();
+
 // ── QUICK NOTES ───────────────────────────────────────────────────────────
-const NOTE_COLORS = [
-  'bg-yellow-100 dark:bg-yellow-900','bg-blue-100 dark:bg-blue-900','bg-green-100 dark:bg-green-900',
-  'bg-pink-100 dark:bg-pink-900','bg-purple-100 dark:bg-purple-900','bg-orange-100 dark:bg-orange-900',
-];
+const NOTE_COLORS = ['#fef9c3','#dbeafe','#dcfce7','#fce7f3','#ede9fe','#ffedd5'];
+const NOTE_DOT_CLASSES = ['bg-yellow-200','bg-blue-200','bg-green-200','bg-pink-200','bg-purple-200','bg-orange-200'];
 let notes = JSON.parse(localStorage.getItem('notes') || '[]');
 if (!notes.length) {
   notes = [
@@ -692,14 +835,14 @@ function renderNotes() {
   const grid = document.getElementById('notes-grid');
   if (!notes.length) { grid.innerHTML='<p class="text-gray-400 col-span-3 text-center mt-10">No notes yet.</p>'; return; }
   grid.innerHTML = notes.map(n => `
-    <div class="rounded-xl shadow p-4 flex flex-col gap-2 ${NOTE_COLORS[n.color]} relative group" style="min-height:140px">
-      <input class="font-semibold text-sm bg-transparent border-none outline-none w-full text-gray-800 dark:text-gray-100 placeholder-gray-400"
+    <div class="rounded-xl shadow p-4 flex flex-col gap-2 relative group" style="min-height:140px; background:${NOTE_COLORS[n.color]}">
+      <input class="font-semibold text-sm bg-transparent border-none outline-none w-full text-gray-800 placeholder-gray-500"
         value="${escHtml(n.title)}" placeholder="Title" onchange="updateNote(${n.id},'title',this.value)" />
-      <textarea class="flex-1 text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300 placeholder-gray-400"
+      <textarea class="flex-1 text-sm bg-transparent border-none outline-none resize-none text-gray-700 placeholder-gray-400"
         placeholder="Write something..." onchange="updateNote(${n.id},'body',this.value)" rows="4">${escHtml(n.body)}</textarea>
       <div class="flex items-center justify-between mt-1">
-        <div class="flex gap-1">${NOTE_COLORS.map((c,i)=>`<button onclick="updateNote(${n.id},'color',${i})" class="w-4 h-4 rounded-full border-2 ${i===n.color?'border-gray-600 dark:border-gray-200':'border-transparent'} ${c.split(' ')[0]}"></button>`).join('')}</div>
-        <button onclick="deleteNote(${n.id})" class="text-xs text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
+        <div class="flex gap-1">${NOTE_DOT_CLASSES.map((cls,i)=>`<button onclick="updateNote(${n.id},'color',${i})" class="w-4 h-4 rounded-full border-2 ${i===n.color?'border-gray-500':'border-transparent'} ${cls}"></button>`).join('')}</div>
+        <button onclick="deleteNote(${n.id})" class="text-xs text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
       </div>
     </div>`).join('');
 }
@@ -792,6 +935,7 @@ function saveBudget() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
+if (!localStorage.getItem('budget')) localStorage.setItem('budget', '80');
 show('assignments');
 </script>
 </body>
