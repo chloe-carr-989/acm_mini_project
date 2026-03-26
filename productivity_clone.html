@@ -76,7 +76,11 @@
 
     <!-- GRADES -->
     <section id="page-grades" class="hidden">
-      <h1 class="text-2xl font-semibold mb-4">Grades</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">Grades</h1>
+        <button onclick="openGradeModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ Add Course</button>
+      </div>
+      <div id="gpa-banner" class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-5 flex items-center gap-6"></div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="grades-grid"></div>
     </section>
 
@@ -319,6 +323,29 @@
   </div>
 </div>
 
+<!-- GRADE MODAL -->
+<div id="grade-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <h2 class="text-xl font-semibold mb-4">Add Course</h2>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Course</label>
+      <input id="g-cls" type="text" placeholder="e.g. CSCI 301" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Grade (%)</label>
+      <input id="g-pct" type="number" min="0" max="100" placeholder="e.g. 91" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="mb-5">
+      <label class="block text-sm font-medium mb-1">Credits</label>
+      <input id="g-credits" type="number" min="1" max="6" value="3" class="w-full border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
+    <div class="flex gap-3">
+      <button onclick="saveGrade()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+      <button onclick="closeGradeModal()" class="flex-1 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCHEDULE MODAL -->
 <div id="schedule-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
@@ -435,13 +462,16 @@ if (!expenses.length) {
   ];
 }
 
-const grades = [
-  { cls:'CSCI 301', grade:'A-', pct:91 },
-  { cls:'MATH 211', grade:'B+', pct:87 },
-  { cls:'CSCI 416', grade:'A', pct:95 },
-  { cls:'HIST 150', grade:'B', pct:83 },
-  { cls:'PHYS 201', grade:'B+', pct:88 },
-];
+let grades = JSON.parse(localStorage.getItem('grades') || '[]');
+if (!grades.length) {
+  grades = [
+    { id:1, cls:'CSCI 301', pct:91, credits:3 },
+    { id:2, cls:'MATH 211', pct:87, credits:4 },
+    { id:3, cls:'CSCI 416', pct:95, credits:3 },
+    { id:4, cls:'HIST 150', pct:83, credits:3 },
+    { id:5, cls:'PHYS 201', pct:88, credits:4 },
+  ];
+}
 
 // ── DARK MODE ─────────────────────────────────────────────────────────────
 let dark = localStorage.getItem('dark') === 'true';
@@ -478,7 +508,7 @@ function renderAssignments() {
     const p = a.priority === 'High' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
             : a.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
             : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
-    return `<tr class="border-t border-gray-100 dark:border-gray-700 ${a.done?'opacity-50':''} hover:bg-gray-50 dark:hover:bg-gray-750">
+    return `<tr class="border-t border-gray-700 ${a.done?'opacity-40':''} dark:hover:bg-gray-700">
       <td class="px-4 py-3 font-medium">${escHtml(a.cls)}</td>
       <td class="px-4 py-3 ${a.done?'line-through text-gray-400':''}">${escHtml(a.title)}</td>
       <td class="px-4 py-3 text-gray-500">${a.due}</td>
@@ -502,16 +532,81 @@ function saveAssignment() {
 }
 
 // ── GRADES ────────────────────────────────────────────────────────────────
+function saveGrades() { localStorage.setItem('grades', JSON.stringify(grades)); }
+function pctToLetter(p) {
+  if (p >= 97) return 'A+'; if (p >= 93) return 'A'; if (p >= 90) return 'A-';
+  if (p >= 87) return 'B+'; if (p >= 83) return 'B'; if (p >= 80) return 'B-';
+  if (p >= 77) return 'C+'; if (p >= 73) return 'C'; if (p >= 70) return 'C-';
+  if (p >= 60) return 'D'; return 'F';
+}
+function pctToGPA(p) {
+  if (p >= 97) return 4.0; if (p >= 93) return 4.0; if (p >= 90) return 3.7;
+  if (p >= 87) return 3.3; if (p >= 83) return 3.0; if (p >= 80) return 2.7;
+  if (p >= 77) return 2.3; if (p >= 73) return 2.0; if (p >= 70) return 1.7;
+  if (p >= 60) return 1.0; return 0.0;
+}
+function calcGPA() {
+  if (!grades.length) return 0;
+  const totalPts = grades.reduce((s,g) => s + pctToGPA(g.pct) * g.credits, 0);
+  const totalCr  = grades.reduce((s,g) => s + g.credits, 0);
+  return totalCr ? (totalPts / totalCr).toFixed(2) : '0.00';
+}
+function updateGradePct(id, val) {
+  const p = Math.max(0, Math.min(100, parseInt(val) || 0));
+  const g = grades.find(g=>g.id===id);
+  if (g) { g.pct = p; saveGrades(); renderGrades(); }
+}
+function deleteGrade(id) { grades = grades.filter(g=>g.id!==id); saveGrades(); renderGrades(); }
+function openGradeModal() { document.getElementById('grade-modal').classList.replace('hidden','flex'); }
+function closeGradeModal() { document.getElementById('grade-modal').classList.replace('flex','hidden'); }
+function saveGrade() {
+  const cls = document.getElementById('g-cls').value.trim();
+  const pct = parseInt(document.getElementById('g-pct').value);
+  const credits = parseInt(document.getElementById('g-credits').value) || 3;
+  if (!cls || isNaN(pct)) return alert('Fill in all fields.');
+  grades.push({ id: Date.now(), cls, pct: Math.max(0,Math.min(100,pct)), credits });
+  saveGrades(); closeGradeModal(); renderGrades();
+  ['g-cls','g-pct'].forEach(id => document.getElementById(id).value='');
+}
 function renderGrades() {
+  const gpa = calcGPA();
+  const totalCr = grades.reduce((s,g)=>s+g.credits,0);
+  const gpaColor = gpa >= 3.5 ? 'text-green-500' : gpa >= 3.0 ? 'text-blue-500' : gpa >= 2.0 ? 'text-yellow-500' : 'text-red-500';
+  document.getElementById('gpa-banner').innerHTML = `
+    <div class="text-center">
+      <div class="text-xs uppercase tracking-widest text-gray-400 mb-1">GPA</div>
+      <div class="text-4xl font-bold ${gpaColor}">${gpa}</div>
+    </div>
+    <div class="w-px h-12 bg-gray-200 dark:bg-gray-700"></div>
+    <div class="text-center">
+      <div class="text-xs uppercase tracking-widest text-gray-400 mb-1">Courses</div>
+      <div class="text-4xl font-bold">${grades.length}</div>
+    </div>
+    <div class="w-px h-12 bg-gray-200 dark:bg-gray-700"></div>
+    <div class="text-center">
+      <div class="text-xs uppercase tracking-widest text-gray-400 mb-1">Credits</div>
+      <div class="text-4xl font-bold">${totalCr}</div>
+    </div>`;
+
   document.getElementById('grades-grid').innerHTML = grades.map(g => {
-    const color = g.pct >= 90 ? 'text-green-600 dark:text-green-400' : g.pct >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-yellow-600 dark:text-yellow-400';
-    return `<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
-      <div class="text-sm text-gray-500 mb-1">${g.cls}</div>
-      <div class="text-4xl font-bold ${color} mb-1">${g.grade}</div>
-      <div class="text-sm text-gray-400">${g.pct}%</div>
-      <div class="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-        <div class="h-full rounded-full bg-blue-500" style="width:${g.pct}%"></div>
+    const letter = pctToLetter(g.pct);
+    const barColor = g.pct >= 90 ? 'bg-green-500' : g.pct >= 80 ? 'bg-blue-500' : g.pct >= 70 ? 'bg-yellow-500' : 'bg-red-500';
+    const textColor = g.pct >= 90 ? 'text-green-500' : g.pct >= 80 ? 'text-blue-500' : g.pct >= 70 ? 'text-yellow-500' : 'text-red-500';
+    return `<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 group relative">
+      <button onclick="deleteGrade(${g.id})" class="absolute top-3 right-3 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-lg">×</button>
+      <div class="text-sm text-gray-500 mb-2">${escHtml(g.cls)} <span class="text-xs text-gray-400">(${g.credits} cr)</span></div>
+      <div class="text-4xl font-bold ${textColor} mb-1">${letter}</div>
+      <div class="flex items-center gap-2 mt-2 mb-3">
+        <input type="range" min="0" max="100" value="${g.pct}"
+          oninput="this.nextElementSibling.textContent=this.value+'%'"
+          onchange="updateGradePct(${g.id}, this.value)"
+          class="flex-1 accent-blue-500 cursor-pointer" />
+        <span class="text-sm font-medium w-10 text-right tabular-nums">${g.pct}%</span>
       </div>
+      <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full rounded-full ${barColor} transition-all" style="width:${g.pct}%"></div>
+      </div>
+      <div class="text-xs text-gray-400 mt-2">GPA points: ${pctToGPA(g.pct).toFixed(1)}</div>
     </div>`;
   }).join('');
 }
@@ -875,7 +970,7 @@ function renderSpending() {
       <div class="text-sm text-gray-400">${topCat?'$'+topCat[1].toFixed(2):''}</div>
     </div>`;
   document.getElementById('spending-body').innerHTML = [...expenses].reverse().slice(0,10).map(e =>
-    `<tr class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750">
+    `<tr class="border-t border-gray-700 dark:hover:bg-gray-700">
       <td class="py-2 text-gray-500 text-xs">${e.date}</td>
       <td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-700">${e.category}</span></td>
       <td class="py-2">${escHtml(e.desc)}</td>
