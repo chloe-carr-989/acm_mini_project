@@ -33,6 +33,9 @@
       <button class="tab-btn" onclick="show('study')">Study Timer</button>
       <button class="tab-btn" onclick="show('games')">Games</button>
 
+      <div class="px-5 py-1 mt-3 text-xs uppercase tracking-widest text-gray-400">Notes</div>
+      <button class="tab-btn" onclick="show('notes')">Quick Notes</button>
+
       <div class="px-5 py-1 mt-3 text-xs uppercase tracking-widest text-gray-400">Spending</div>
       <button class="tab-btn" onclick="show('spending')">Overview</button>
       <button class="tab-btn" onclick="show('add_spending')">Add Expense</button>
@@ -106,6 +109,15 @@
         <div id="guess-msg" class="text-sm font-medium min-h-[20px]"></div>
         <button onclick="newGame()" class="mt-3 text-xs text-gray-400 hover:text-gray-600 underline">New game</button>
       </div>
+    </section>
+
+    <!-- QUICK NOTES -->
+    <section id="page-notes" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold">Quick Notes</h1>
+        <button onclick="addNote()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ New Note</button>
+      </div>
+      <div id="notes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
 
     <!-- SPENDING OVERVIEW -->
@@ -231,6 +243,7 @@ function show(page) {
   currentPage = page;
   if (page === 'assignments') renderAssignments();
   if (page === 'grades') renderGrades();
+  if (page === 'notes') renderNotes();
   if (page === 'spending') renderSpending();
 }
 
@@ -315,6 +328,59 @@ function makeGuess() {
   else { msg.className='text-sm font-medium text-red-500'; msg.textContent=g<secret?'Too low!':'Too high!'; }
 }
 newGame();
+
+// ── QUICK NOTES ───────────────────────────────────────────────────────────
+const NOTE_COLORS = [
+  'bg-yellow-100 dark:bg-yellow-900',
+  'bg-blue-100 dark:bg-blue-900',
+  'bg-green-100 dark:bg-green-900',
+  'bg-pink-100 dark:bg-pink-900',
+  'bg-purple-100 dark:bg-purple-900',
+  'bg-orange-100 dark:bg-orange-900',
+];
+let notes = JSON.parse(localStorage.getItem('notes') || '[]');
+if (!notes.length) {
+  notes = [
+    { id:1, title:'Welcome!', body:'Click a note to edit it. Use + New Note to create one.', color:0, ts: Date.now() },
+    { id:2, title:'Study tip', body:'Pomodoro: 25 min focus, 5 min break.', color:2, ts: Date.now()-1000 },
+  ];
+}
+function saveNotes() { localStorage.setItem('notes', JSON.stringify(notes)); }
+function renderNotes() {
+  const grid = document.getElementById('notes-grid');
+  if (!notes.length) { grid.innerHTML = '<p class="text-gray-400 col-span-3 text-center mt-10">No notes yet. Hit + New Note.</p>'; return; }
+  grid.innerHTML = notes.map(n => `
+    <div class="rounded-xl shadow p-4 flex flex-col gap-2 ${NOTE_COLORS[n.color]} relative group" style="min-height:140px">
+      <input
+        class="font-semibold text-sm bg-transparent border-none outline-none w-full text-gray-800 dark:text-gray-100 placeholder-gray-400"
+        value="${escHtml(n.title)}"
+        placeholder="Title"
+        onchange="updateNote(${n.id},'title',this.value)"
+      />
+      <textarea
+        class="flex-1 text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-300 placeholder-gray-400"
+        placeholder="Write something..."
+        onchange="updateNote(${n.id},'body',this.value)"
+        rows="4"
+      >${escHtml(n.body)}</textarea>
+      <div class="flex items-center justify-between mt-1">
+        <div class="flex gap-1">${NOTE_COLORS.map((c,i)=>`<button onclick="updateNote(${n.id},'color',${i})" class="w-4 h-4 rounded-full border-2 ${i===n.color?'border-gray-600 dark:border-gray-200':'border-transparent'} ${c.split(' ')[0]}"></button>`).join('')}</div>
+        <button onclick="deleteNote(${n.id})" class="text-xs text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
+      </div>
+    </div>`).join('');
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function addNote() {
+  notes.unshift({ id: Date.now(), title:'', body:'', color: Math.floor(Math.random()*NOTE_COLORS.length), ts: Date.now() });
+  saveNotes(); renderNotes();
+}
+function updateNote(id, field, val) {
+  const n = notes.find(n=>n.id===id);
+  if (n) { n[field] = field==='color' ? parseInt(val) : val; saveNotes(); if(field==='color') renderNotes(); }
+}
+function deleteNote(id) {
+  notes = notes.filter(n=>n.id!==id); saveNotes(); renderNotes();
+}
 
 // ── SPENDING ──────────────────────────────────────────────────────────────
 function saveExpenses() { localStorage.setItem('expenses', JSON.stringify(expenses)); }
